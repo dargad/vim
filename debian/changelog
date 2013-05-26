@@ -2,6 +2,12 @@ vim (7.3.1027) raring; urgency=low
 
   * Auto version upgrade (7.3.1027)
 
+ -- Matthias Klose <doko@ubuntu.com>  Sun, 26 May 2013 20:53:34 +0200
+
+vim (7.3.1027) raring; urgency=low
+
+  * Auto version upgrade (7.3.1027)
+
  -- Matthias Klose <doko@ubuntu.com>  Sun, 26 May 2013 20:29:30 +0200
 
 vim (2:7.3.547-6ubuntu5) raring; urgency=low
