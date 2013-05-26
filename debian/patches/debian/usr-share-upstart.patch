@@ -1,0 +1,14 @@
+Author: Loïc Minier <loic.minier@ubuntu.com>
+Description: Set syntax to upstart for */usr/share/upstart/**/*.conf files.
+Forwarded: no
+
+--- a/runtime/filetype.vim
++++ b/runtime/filetype.vim
+@@ -2166,6 +2166,7 @@
+ au BufNewFile,BufRead */etc/updatedb.conf	setf updatedb
+ 
+ " Upstart (init(8)) config files
++au BufNewFile,BufRead */usr/share/upstart/**/*.conf             setf upstart
+ au BufNewFile,BufRead */etc/init/*.conf,*/.init/*.conf          setf upstart
+ au BufNewFile,BufRead */etc/init/*.override,*/.init/*.override  setf upstart
+ 

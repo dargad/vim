@@ -1,0 +1,17 @@
+Author: Clint Byrum <clint@ubuntu.com>
+Description: Add missing setuid and setgid keywords.
+Forwarded: no
+
+Index: vim-7.3.547/runtime/syntax/upstart.vim
+===================================================================
+--- vim-7.3.547.orig/runtime/syntax/upstart.vim	2012-06-06 14:08:38.000000000 -0700
++++ vim-7.3.547/runtime/syntax/upstart.vim	2012-12-21 09:11:08.144350670 -0800
+@@ -36,7 +36,7 @@
+ " one argument
+ syn keyword upstartStatement description author version instance expect
+ syn keyword upstartStatement pid kill normal console env exit export
+-syn keyword upstartStatement umask nice oom chroot chdir exec
++syn keyword upstartStatement umask nice oom chroot chdir exec setuid setgid
+ 
+ " two arguments
+ syn keyword upstartStatement limit

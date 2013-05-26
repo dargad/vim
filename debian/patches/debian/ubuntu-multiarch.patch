@@ -1,0 +1,114 @@
+Index: b/src/configure.in
+===================================================================
+--- a/src/configure.in	2013-04-02 08:58:18.000000000 +0000
++++ b/src/configure.in	2013-04-02 09:01:02.596048288 +0000
+@@ -878,19 +878,6 @@
+ 	dnl    see what the interpreter is built from
+ 	AC_CACHE_VAL(vi_cv_path_python_plibs,
+ 	[
+-	    pwd=`pwd`
+-	    tmp_mkf="$pwd/config-PyMake$$"
+-	    cat -- "${PYTHON_CONFDIR}/Makefile" - <<'eof' >"${tmp_mkf}"
+-__:
+-	@echo "python_BASEMODLIBS='$(BASEMODLIBS)'"
+-	@echo "python_LIBS='$(LIBS)'"
+-	@echo "python_SYSLIBS='$(SYSLIBS)'"
+-	@echo "python_LINKFORSHARED='$(LINKFORSHARED)'"
+-	@echo "python_INSTSONAME='$(INSTSONAME)'"
+-eof
+-	    dnl -- delete the lines from make about Entering/Leaving directory
+-	    eval "`cd ${PYTHON_CONFDIR} && make -f "${tmp_mkf}" __ | sed '/ directory /d'`"
+-	    rm -f -- "${tmp_mkf}"
+ 	    if test "x$MACOSX" = "xyes" && ${vi_cv_path_python} -c \
+ 		"import sys; sys.exit(${vi_cv_var_python_version} < 2.3)"; then
+ 	      vi_cv_path_python_plibs="-framework Python"
+@@ -898,20 +885,13 @@
+ 	      if test "${vi_cv_var_python_version}" = "1.4"; then
+ 		  vi_cv_path_python_plibs="${PYTHON_CONFDIR}/libModules.a ${PYTHON_CONFDIR}/libPython.a ${PYTHON_CONFDIR}/libObjects.a ${PYTHON_CONFDIR}/libParser.a"
+ 	      else
+-		  vi_cv_path_python_plibs="-L${PYTHON_CONFDIR} -lpython${vi_cv_var_python_version}"
++		  vi_cv_path_python_plibs=`python-config --ldflags`
+ 	      fi
+-	      vi_cv_path_python_plibs="${vi_cv_path_python_plibs} ${python_BASEMODLIBS} ${python_LIBS} ${python_SYSLIBS} ${python_LINKFORSHARED}"
+-	      dnl remove -ltermcap, it can conflict with an earlier -lncurses
+-	      vi_cv_path_python_plibs=`echo $vi_cv_path_python_plibs | sed s/-ltermcap//`
+ 	    fi
+ 	])
+ 
+ 	PYTHON_LIBS="${vi_cv_path_python_plibs}"
+-	if test "${vi_cv_path_python_pfx}" = "${vi_cv_path_python_epfx}"; then
+-	  PYTHON_CFLAGS="-I${vi_cv_path_python_pfx}/include/python${vi_cv_var_python_version} -DPYTHON_HOME=\\\"${vi_cv_path_python_pfx}\\\""
+-	else
+-	  PYTHON_CFLAGS="-I${vi_cv_path_python_pfx}/include/python${vi_cv_var_python_version} -I${vi_cv_path_python_epfx}/include/python${vi_cv_var_python_version} -DPYTHON_HOME=\\\"${vi_cv_path_python_pfx}\\\""
+-	fi
++	PYTHON_CFLAGS="`python-config --includes` -DPYTHON_HOME=\\\"${vi_cv_path_python_pfx}\\\""
+ 	PYTHON_SRC="if_python.c"
+ 	PYTHON_OBJ="objects/if_python.o"
+ 	if test "${vi_cv_var_python_version}" = "1.4"; then
+@@ -1344,7 +1324,8 @@
+       if test -z "$SKIP_TCL"; then
+ 	AC_MSG_CHECKING(for location of tclConfig.sh script)
+ 	if test "x$MACOSX" != "xyes"; then
+-	  tclcnf=`echo $tclinc | sed s/include/lib/g`
++	  tclcnf=`echo $tclinc | sed s,include,lib/${DEB_HOST_MULTIARCH},g`
++	  tclcnf="$tclcnf `echo $tclinc | sed s/include/lib/g`"
+ 	  tclcnf="$tclcnf `echo $tclinc | sed s/include/lib64/g`"
+ 	else
+ 	  dnl For Mac OS X 10.3, use the OS-provided framework location
+Index: b/src/auto/configure
+===================================================================
+--- a/src/auto/configure	2013-04-02 08:58:18.000000000 +0000
++++ b/src/auto/configure	2013-04-02 09:01:12.200111097 +0000
+@@ -5319,18 +5319,6 @@
+   $as_echo_n "(cached) " >&6
+ else
+ 
+-	    pwd=`pwd`
+-	    tmp_mkf="$pwd/config-PyMake$$"
+-	    cat -- "${PYTHON_CONFDIR}/Makefile" - <<'eof' >"${tmp_mkf}"
+-__:
+-	@echo "python_BASEMODLIBS='$(BASEMODLIBS)'"
+-	@echo "python_LIBS='$(LIBS)'"
+-	@echo "python_SYSLIBS='$(SYSLIBS)'"
+-	@echo "python_LINKFORSHARED='$(LINKFORSHARED)'"
+-	@echo "python_INSTSONAME='$(INSTSONAME)'"
+-eof
+-	    	    eval "`cd ${PYTHON_CONFDIR} && make -f "${tmp_mkf}" __ | sed '/ directory /d'`"
+-	    rm -f -- "${tmp_mkf}"
+ 	    if test "x$MACOSX" = "xyes" && ${vi_cv_path_python} -c \
+ 		"import sys; sys.exit(${vi_cv_var_python_version} < 2.3)"; then
+ 	      vi_cv_path_python_plibs="-framework Python"
+@@ -5338,21 +5326,15 @@
+ 	      if test "${vi_cv_var_python_version}" = "1.4"; then
+ 		  vi_cv_path_python_plibs="${PYTHON_CONFDIR}/libModules.a ${PYTHON_CONFDIR}/libPython.a ${PYTHON_CONFDIR}/libObjects.a ${PYTHON_CONFDIR}/libParser.a"
+ 	      else
+-		  vi_cv_path_python_plibs="-L${PYTHON_CONFDIR} -lpython${vi_cv_var_python_version}"
++		  vi_cv_path_python_plibs=`python-config --ldflags`
+ 	      fi
+-	      vi_cv_path_python_plibs="${vi_cv_path_python_plibs} ${python_BASEMODLIBS} ${python_LIBS} ${python_SYSLIBS} ${python_LINKFORSHARED}"
+-	      	      vi_cv_path_python_plibs=`echo $vi_cv_path_python_plibs | sed s/-ltermcap//`
+ 	    fi
+ 
+ fi
+ 
+ 
+ 	PYTHON_LIBS="${vi_cv_path_python_plibs}"
+-	if test "${vi_cv_path_python_pfx}" = "${vi_cv_path_python_epfx}"; then
+-	  PYTHON_CFLAGS="-I${vi_cv_path_python_pfx}/include/python${vi_cv_var_python_version} -DPYTHON_HOME=\\\"${vi_cv_path_python_pfx}\\\""
+-	else
+-	  PYTHON_CFLAGS="-I${vi_cv_path_python_pfx}/include/python${vi_cv_var_python_version} -I${vi_cv_path_python_epfx}/include/python${vi_cv_var_python_version} -DPYTHON_HOME=\\\"${vi_cv_path_python_pfx}\\\""
+-	fi
++	PYTHON_CFLAGS="`python-config --includes` -DPYTHON_HOME=\\\"${vi_cv_path_python_pfx}\\\""
+ 	PYTHON_SRC="if_python.c"
+ 	PYTHON_OBJ="objects/if_python.o"
+ 	if test "${vi_cv_var_python_version}" = "1.4"; then
+@@ -6176,7 +6158,8 @@
+ 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for location of tclConfig.sh script" >&5
+ $as_echo_n "checking for location of tclConfig.sh script... " >&6; }
+ 	if test "x$MACOSX" != "xyes"; then
+-	  tclcnf=`echo $tclinc | sed s/include/lib/g`
++          tclcnf=`echo $tclinc | sed s,include,lib/${DEB_HOST_MULTIARCH},g`
++          tclcnf="$tclcnf `echo $tclinc | sed s/include/lib/g`"
+ 	  tclcnf="$tclcnf `echo $tclinc | sed s/include/lib64/g`"
+ 	else
+ 	  	  tclcnf="/System/Library/Frameworks/Tcl.framework"
