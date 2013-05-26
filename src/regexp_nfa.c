@@ -165,9 +165,9 @@ static int *post_start;  /* holds the postfix form of r.e. */
 static int *post_end;
 static int *post_ptr;
 
-static int nstate;	/* Number of states in the NFA. */
+static int nstate;	/* Number of states in the NFA. Also used when
+			 * executing. */
 static int istate;	/* Index in the state vector, used in new_state() */
-static int nstate_max;	/* Upper bound of estimated number of states. */
 
 
 static int nfa_regcomp_start __ARGS((char_u*expr, int re_flags));
@@ -219,10 +219,11 @@ nfa_regcomp_start(expr, re_flags)
     int		re_flags;	    /* see vim_regcomp() */
 {
     size_t	postfix_size;
+    int		nstate_max;
 
     nstate = 0;
     istate = 0;
-    /* A reasonable estimation for size */
+    /* A reasonable estimation for maximum size */
     nstate_max = (int)(STRLEN(expr) + 1) * NFA_POSTFIX_MULTIPLIER;
 
     /* Some items blow up in size, such as [A-z].  Add more space for that.
@@ -1968,10 +1969,20 @@ new_state(c, out, out1)
  * Frag_T.out is a list of places that need to be set to the
  * next state for this fragment.
  */
+
+/* Since the out pointers in the list are always
+ * uninitialized, we use the pointers themselves
+ * as storage for the Ptrlists. */
 typedef union Ptrlist Ptrlist;
+union Ptrlist
+{
+    Ptrlist	*next;
+    nfa_state_T	*s;
+};
+
 struct Frag
 {
-    nfa_state_T   *start;
+    nfa_state_T *start;
     Ptrlist	*out;
 };
 typedef struct Frag Frag_T;
@@ -1997,17 +2008,6 @@ frag(start, out)
     n.out = out;
     return n;
 }
-
-/*
- * Since the out pointers in the list are always
- * uninitialized, we use the pointers themselves
- * as storage for the Ptrlists.
- */
-union Ptrlist
-{
-    Ptrlist	*next;
-    nfa_state_T	*s;
-};
 
 /*
  * Create singleton list containing just outp.
@@ -2651,7 +2651,7 @@ addstate(l, state, m, off, lid, match)
 	    break;
 
 	case NFA_MCLOSE + 0:
-	    if (nfa_has_zend == TRUE)
+	    if (nfa_has_zend)
 	    {
 		addstate(l, state->out, m, off, lid, match);
 		break;
@@ -3109,7 +3109,11 @@ nfa_regmatch(start, submatch, m)
 		fprintf(log_fd, "\n");
 #endif
 		/* Found the left-most longest match, do not look at any other
-		 * states at this position. */
+		 * states at this position.  When the list of states is going
+		 * to be empty quit without advancing, so that "reginput" is
+		 * correct. */
+		if (nextlist->n == 0 && neglist->n == 0)
+		    clen = 0;
 		goto nextchar;
 
 	    case NFA_END_INVISIBLE:
@@ -3354,13 +3358,19 @@ nfa_regmatch(start, submatch, m)
 #endif
 
 	    case NFA_NEWL:
-		if (!reg_line_lbr && REG_MULTI
-				     && curc == NUL && reglnum <= reg_maxline)
+		if (curc == NUL && !reg_line_lbr && REG_MULTI
+						    && reglnum <= reg_maxline)
 		{
 		    go_to_nextline = TRUE;
 		    /* Pass -1 for the offset, which means taking the position
 		     * at the start of the next line. */
 		    addstate(nextlist, t->state->out, &t->sub, -1,
+							  listid + 1, &match);
+		}
+		else if (curc == '\n' && reg_line_lbr)
+		{
+		    /* match \n as if it is an ordinary character */
+		    addstate(nextlist, t->state->out, &t->sub, 1,
 							  listid + 1, &match);
 		}
 		break;
@@ -3553,14 +3563,18 @@ nfa_regmatch(start, submatch, m)
 		break;
 
 	    default:	/* regular character */
-		/* TODO: put this in #ifdef later */
-		if (t->state->c < -256)
-		    EMSGN("INTERNAL: Negative state char: %ld", t->state->c);
-		result = (no_Magic(t->state->c) == curc);
+	      {
+		int c = t->state->c;
 
-		if (!result)
-		    result = ireg_ic == TRUE
-			       && MB_TOLOWER(t->state->c) == MB_TOLOWER(curc);
+		/* TODO: put this in #ifdef later */
+		if (c < -256)
+		    EMSGN("INTERNAL: Negative state char: %ld", c);
+		if (is_Magic(c))
+		    c = un_Magic(c);
+		result = (c == curc);
+
+		if (!result && ireg_ic)
+		    result = MB_TOLOWER(c) == MB_TOLOWER(curc);
 #ifdef FEAT_MBYTE
 		/* If there is a composing character which is not being
 		 * ignored there can be no match. Match with composing
@@ -3571,16 +3585,20 @@ nfa_regmatch(start, submatch, m)
 #endif
 		ADD_POS_NEG_STATE(t->state);
 		break;
+	      }
 	    }
 
 	} /* for (thislist = thislist; thislist->state; thislist++) */
 
-	/* The first found match is the leftmost one, but there may be a
-	 * longer one. Keep running the NFA, but don't start from the
-	 * beginning. Also, do not add the start state in recursive calls of
-	 * nfa_regmatch(), because recursive calls should only start in the
-	 * first position. */
-	if (match == FALSE && start->c == NFA_MOPEN + 0)
+	/* Look for the start of a match in the current position by adding the
+	 * start state to the list of states.
+	 * The first found match is the leftmost one, thus the order of states
+	 * matters!
+	 * Do not add the start state in recursive calls of nfa_regmatch(),
+	 * because recursive calls should only start in the first position.
+	 * Also don't start a match past the first line. */
+	if (match == FALSE && start->c == NFA_MOPEN + 0
+						 && reglnum == 0 && clen != 0)
 	{
 #ifdef ENABLE_LOG
 	    fprintf(log_fd, "(---) STARTSTATE\n");
@@ -3783,8 +3801,9 @@ nfa_regexec_both(line, col)
     regline = line;
     reglnum = 0;    /* relative to line */
 
-    nstate = prog->nstate;
+    nfa_has_zend = prog->has_zend;
 
+    nstate = prog->nstate;
     for (i = 0; i < nstate; ++i)
     {
 	prog->state[i].id = i;
@@ -3827,7 +3846,12 @@ nfa_regcomp(expr, re_flags)
      * (and count its size). */
     postfix = re2post();
     if (postfix == NULL)
+    {
+	/* TODO: only give this error for debugging? */
+	if (post_ptr >= post_end)
+	    EMSGN("Internal error: estimated max number of states insufficient: %ld", post_end - post_start);
 	goto fail;	    /* Cascaded (syntax?) error */
+    }
 
     /*
      * In order to build the NFA, we parse the input regexp twice:
@@ -3871,6 +3895,7 @@ nfa_regcomp(expr, re_flags)
     prog->regflags = regflags;
     prog->engine = &nfa_regengine;
     prog->nstate = nstate;
+    prog->has_zend = nfa_has_zend;
 #ifdef ENABLE_LOG
     nfa_postfix_dump(expr, OK);
     nfa_dump(prog);
