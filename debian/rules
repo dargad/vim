@@ -12,7 +12,6 @@ else
   DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
   DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
   DEB_HOST_ARCH_CPU ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
-  DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
   DEB_VENDOR := $(shell dpkg-vendor --query vendor)
 
   CFLAGS := -Wall -g
@@ -24,7 +23,6 @@ else
 
   DEB_VERSION_UPSTREAM := $(shell dpkg-parsechangelog | sed -n '/^Version:/{s/Version: *\([^:]*:\)\?\([^-]*\)-.*/\2/;p;q}')
 endif
-export DEB_HOST_MULTIARCH
 
 BUILDER := $(shell echo $${DEBEMAIL:-$${EMAIL:-$$(echo $$LOGNAME@$$(cat /etc/mailname 2> /dev/null))}})
 
@@ -98,7 +96,7 @@ NOINTERPFLAGS:=--disable-luainterp
 NOINTERPFLAGS+=--disable-mzschemeinterp
 NOINTERPFLAGS+=--disable-perlinterp
 ifeq ($(DEB_VENDOR),Ubuntu)
-	NOINTERPFLAGS+=--enable-pythoninterp --with-python-config-dir=/usr/lib/python2.7/config-$(DEB_HOST_MULTIARCH)
+	NOINTERPFLAGS+=--enable-pythoninterp
 else
 	NOINTERPFLAGS+=--disable-pythoninterp
 endif
@@ -109,7 +107,7 @@ NOINTERPFLAGS+=--disable-tclinterp
 ALLINTERPFLAGS:=--enable-luainterp
 ALLINTERPFLAGS+=--disable-mzschemeinterp
 ALLINTERPFLAGS+=--enable-perlinterp
-ALLINTERPFLAGS+=--enable-pythoninterp --with-python-config-dir=/usr/lib/python2.7/config-$(DEB_HOST_MULTIARCH)
+ALLINTERPFLAGS+=--enable-pythoninterp
 ALLINTERPFLAGS+=--disable-python3interp
 ALLINTERPFLAGS+=--enable-rubyinterp
 ALLINTERPFLAGS+=--enable-tclinterp
@@ -123,9 +121,7 @@ ALLINTERPFLAGS+=--enable-tclinterp
 
 VARIANTS+=vim-tiny
 VARIANTS+=vim-gtk
-ifneq (m68k,$(DEB_HOST_ARCH_CPU))
-	VARIANTS+=vim-gnome
-endif
+VARIANTS+=vim-gnome
 VARIANTS+=vim-athena
 VARIANTS+=vim-nox
 VARIANTS+=vim-basic
@@ -323,17 +319,12 @@ install-stamp-vim-basic: build-stamp-vim-basic $(DOT_IN_DEPS)
 # proper responses.
 # Prefer the vim-nox binary if it exists since that will also test the
 # language interfaces.
-#
-# We force the tests to pass (|| true) because test61 is very time sensitive,
-# so slow or loaded systems will always fail on that test.  Therefore we find
-# any "failed" file other than one for test61 to determine if the tests failed
 	if [ $(MAKETEST) = "yes" ]; then \
 	  if [ -e src/vim-nox/vim ]; then \
-	    $(MAKE) -j1 -C src/vim-nox test || true; \
+	    $(MAKE) -j1 -C src/vim-nox test; \
 	  else \
-	    $(MAKE) -j1 -C src/vim-basic test || true; \
+	    $(MAKE) -j1 -C src/vim-basic test; \
 	  fi; \
-	  [ $$(find src -type f -name '*.failed' \! -name 'test61.failed' | wc -l) -eq 0 ]; \
 	fi
 	# installvimbin installs the vim binary under debian/tmp but we install
 	# it into the vim package from src/.  Need to rm it from debian/tmp so
