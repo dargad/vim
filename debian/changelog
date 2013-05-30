@@ -1,3 +1,9 @@
+vim (2:7.3.1070) raring; urgency=low
+
+  * Auto version upgrade (7.3.1070)
+
+ -- Dariusz Gadomski <dgadomski@gmail.com>  Thu, 30 May 2013 15:50:06 +0200
+
 vim (2:7.3.923-2) raring; urgency=low
 
   * Changed distribution name.
