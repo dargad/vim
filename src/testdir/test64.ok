@@ -647,10 +647,13 @@ OK 1 - \>\zs.
 OK 2 - \>\zs.
 OK 0 - abc\@=
 OK 1 - abc\@=
+OK 2 - abc\@=
 OK 0 - abc\@=cd
 OK 1 - abc\@=cd
+OK 2 - abc\@=cd
 OK 0 - abc\@=
 OK 1 - abc\@=
+OK 2 - abc\@=
 OK 0 - abcd\@=e
 OK 1 - abcd\@=e
 OK 2 - abcd\@=e
@@ -659,18 +662,49 @@ OK 1 - abcd\@=e
 OK 2 - abcd\@=e
 OK 0 - \v(abc)@=..
 OK 1 - \v(abc)@=..
+OK 2 - \v(abc)@=..
 OK 0 - \(.*John\)\@=.*Bob
 OK 1 - \(.*John\)\@=.*Bob
 OK 2 - \(.*John\)\@=.*Bob
 OK 0 - \(John.*\)\@=.*Bob
 OK 1 - \(John.*\)\@=.*Bob
+OK 2 - \(John.*\)\@=.*Bob
 OK 0 - .*John\&.*Bob
 OK 1 - .*John\&.*Bob
 OK 2 - .*John\&.*Bob
 OK 0 - .*John\&.*Bob
 OK 1 - .*John\&.*Bob
+OK 2 - .*John\&.*Bob
 OK 0 - \v(test1)@=.*yep
 OK 1 - \v(test1)@=.*yep
+OK 2 - \v(test1)@=.*yep
+OK 0 - foo\(bar\)\@!
+OK 1 - foo\(bar\)\@!
+OK 2 - foo\(bar\)\@!
+OK 0 - foo\(bar\)\@!
+OK 1 - foo\(bar\)\@!
+OK 2 - foo\(bar\)\@!
+OK 0 - if \(\(then\)\@!.\)*$
+OK 1 - if \(\(then\)\@!.\)*$
+OK 2 - if \(\(then\)\@!.\)*$
+OK 0 - if \(\(then\)\@!.\)*$
+OK 1 - if \(\(then\)\@!.\)*$
+OK 2 - if \(\(then\)\@!.\)*$
+OK 0 - \(foo\)\@!bar
+OK 1 - \(foo\)\@!bar
+OK 2 - \(foo\)\@!bar
+OK 0 - \(foo\)\@!...bar
+OK 1 - \(foo\)\@!...bar
+OK 2 - \(foo\)\@!...bar
+OK 0 - ^\%(.*bar\)\@!.*\zsfoo
+OK 1 - ^\%(.*bar\)\@!.*\zsfoo
+OK 2 - ^\%(.*bar\)\@!.*\zsfoo
+OK 0 - ^\%(.*bar\)\@!.*\zsfoo
+OK 1 - ^\%(.*bar\)\@!.*\zsfoo
+OK 2 - ^\%(.*bar\)\@!.*\zsfoo
+OK 0 - ^\%(.*bar\)\@!.*\zsfoo
+OK 1 - ^\%(.*bar\)\@!.*\zsfoo
+OK 2 - ^\%(.*bar\)\@!.*\zsfoo
 OK 0 - [[:alpha:]]\{-2,6}
 OK 1 - [[:alpha:]]\{-2,6}
 OK 2 - [[:alpha:]]\{-2,6}
@@ -716,6 +750,9 @@ OK 2 - \<goo\|go
 OK 0 - \(\i\+\) \1
 OK 1 - \(\i\+\) \1
 OK 2 - \(\i\+\) \1
+OK 0 - \(\i\+\) \1
+OK 1 - \(\i\+\) \1
+OK 2 - \(\i\+\) \1
 OK 0 - \(a\)\(b\)\(c\)\(dd\)\(e\)\(f\)\(g\)\(h\)\(i\)\1\2\3\4\5\6\7\8\9
 OK 1 - \(a\)\(b\)\(c\)\(dd\)\(e\)\(f\)\(g\)\(h\)\(i\)\1\2\3\4\5\6\7\8\9
 OK 2 - \(a\)\(b\)\(c\)\(dd\)\(e\)\(f\)\(g\)\(h\)\(i\)\1\2\3\4\5\6\7\8\9
@@ -737,6 +774,8 @@ OK 2 - \_[^8-9]\+
 OK 0 - \_[^a]\+
 OK 1 - \_[^a]\+
 OK 2 - \_[^a]\+
+OK 0 - [0-9a-zA-Z]\{8}-\([0-9a-zA-Z]\{4}-\)\{3}[0-9a-zA-Z]\{12}
+OK 1 - [0-9a-zA-Z]\{8}-\([0-9a-zA-Z]\{4}-\)\{3}[0-9a-zA-Z]\{12}
 192.168.0.1
 192.168.0.1
 192.168.0.1
