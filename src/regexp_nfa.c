@@ -29,11 +29,6 @@
 # define NFA_REGEXP_DEBUG_LOG	"nfa_regexp_debug.log"
 #endif
 
-/* Upper limit allowed for {m,n} repetitions handled by NFA */
-#define	    NFA_BRACES_MAXLIMIT		    10
-/* For allocating space for the postfix representation */
-#define	    NFA_POSTFIX_MULTIPLIER	    (NFA_BRACES_MAXLIMIT + 2)*2
-
 enum
 {
     NFA_SPLIT = -1024,
@@ -43,10 +38,10 @@ enum
 
     NFA_CONCAT,
     NFA_OR,
-    NFA_STAR,
-    NFA_PLUS,
-    NFA_QUEST,
-    NFA_QUEST_NONGREEDY,	    /* Non-greedy version of \? */
+    NFA_STAR,			    /* greedy * */
+    NFA_STAR_NONGREEDY,		    /* non-greedy * */
+    NFA_QUEST,			    /* greedy \? */
+    NFA_QUEST_NONGREEDY,	    /* non-greedy \? */
     NFA_NOT,			    /* used for [^ab] negated char ranges */
 
     NFA_BOL,			    /* ^    Begin line */
@@ -253,7 +248,7 @@ nfa_regcomp_start(expr, re_flags)
     nstate = 0;
     istate = 0;
     /* A reasonable estimation for maximum size */
-    nstate_max = (int)(STRLEN(expr) + 1) * NFA_POSTFIX_MULTIPLIER;
+    nstate_max = (int)(STRLEN(expr) + 1) * 25;
 
     /* Some items blow up in size, such as [A-z].  Add more space for that.
      * When it is still not enough realloc_post_list() will be used. */
@@ -283,7 +278,7 @@ nfa_regcomp_start(expr, re_flags)
     static int
 realloc_post_list()
 {
-    int   nstate_max = post_end - post_start;
+    int   nstate_max = (int)(post_end - post_start);
     int   new_max = nstate_max + 1000;
     int   *new_start;
     int	  *old_start;
@@ -865,14 +860,10 @@ nfa_regatom()
 		 * pattern -- regardless of whether or not it makes sense. */
 		case '^':
 		    EMIT(NFA_BOF);
-		    /* TODO: Not yet supported */
-		    return FAIL;
 		    break;
 
 		case '$':
 		    EMIT(NFA_EOF);
-		    /* TODO: Not yet supported */
-		    return FAIL;
 		    break;
 
 		case '#':
@@ -1098,8 +1089,9 @@ collection:
 			     * while loop. */
 			}
 		    }
-		    /* Try a range like 'a-x' or '\t-z' */
-		    if (*regparse == '-')
+		    /* Try a range like 'a-x' or '\t-z'. Also allows '-' as a
+		     * start character. */
+		    if (*regparse == '-' && oldstartc != -1)
 		    {
 			emit_range = TRUE;
 			startc = oldstartc;
@@ -1149,16 +1141,13 @@ collection:
 
 		    /* Normal printable char */
 		    if (startc == -1)
-#ifdef FEAT_MBYTE
-			startc = (*mb_ptr2char)(regparse);
-#else
-		    startc = *regparse;
-#endif
+			startc = PTR2CHAR(regparse);
 
 		    /* Previous char was '-', so this char is end of range. */
 		    if (emit_range)
 		    {
-			endc = startc; startc = oldstartc;
+			endc = startc;
+			startc = oldstartc;
 			if (startc > endc)
 			    EMSG_RET_FAIL(_(e_invrange));
 #ifdef FEAT_MBYTE
@@ -1175,7 +1164,6 @@ collection:
 				TRY_NEG();
 				EMIT_GLUE();
 			    }
-			    emit_range = FALSE;
 			}
 			else
 #endif
@@ -1199,8 +1187,9 @@ collection:
 				    TRY_NEG();
 				    EMIT_GLUE();
 				}
-			    emit_range = FALSE;
 			}
+			emit_range = FALSE;
+			startc = -1;
 		    }
 		    else
 		    {
@@ -1329,19 +1318,17 @@ nfa_regpiece()
     int		ret;
     long	minval, maxval;
     int		greedy = TRUE;      /* Braces are prefixed with '-' ? */
-    char_u	*old_regparse, *new_regparse;
+    parse_state_T old_state;
+    parse_state_T new_state;
     int		c2;
     int		old_post_pos;
     int		my_post_start;
-    int		old_regnpar;
     int		quest;
 
-    /* Save the current position in the regexp, so that we can use it if
-     * <atom>{m,n} is next. */
-    old_regparse = regparse;
-    /* Save current number of open parenthesis, so we can use it if
-     * <atom>{m,n} is next */
-    old_regnpar = regnpar;
+    /* Save the current parse state, so that we can use it if <atom>{m,n} is
+     * next. */
+    save_parse_state(&old_state);
+
     /* store current pos in the postfix form, for \{m,n} involving 0s */
     my_post_start = (int)(post_ptr - post_start);
 
@@ -1369,12 +1356,10 @@ nfa_regpiece()
 	     * string.
 	     * The submatch will the empty string.
 	     *
-	     * In order to be consistent with the old engine, we disable
-	     * NFA_PLUS, and replace <atom>+ with <atom><atom>*
+	     * In order to be consistent with the old engine, we replace
+	     * <atom>+ with <atom><atom>*
 	     */
-	    /*	EMIT(NFA_PLUS);	 */
-	    regnpar = old_regnpar;
-	    regparse = old_regparse;
+	    restore_parse_state(&old_state);
 	    curchr = -1;
 	    if (nfa_regatom() == FAIL)
 		return FAIL;
@@ -1441,17 +1426,15 @@ nfa_regpiece()
 	    }
 	    /*  <atom>{0,inf}, <atom>{0,} and <atom>{}  are equivalent to
 	     *  <atom>*  */
-	    if (minval == 0 && maxval == MAX_LIMIT && greedy)
+	    if (minval == 0 && maxval == MAX_LIMIT)
 	    {
-		EMIT(NFA_STAR);
+		if (greedy)
+		    /* \{}, \{0,} */
+		    EMIT(NFA_STAR);
+		else
+		    /* \{-}, \{-0,} */
+		    EMIT(NFA_STAR_NONGREEDY);
 		break;
-	    }
-
-	    if (maxval > NFA_BRACES_MAXLIMIT)
-	    {
-		/* This would yield a huge automaton and use too much memory.
-		 * Revert to old engine */
-		return FAIL;
 	    }
 
 	    /* Special case: x{0} or x{-0} */
@@ -1466,29 +1449,38 @@ nfa_regpiece()
 
 	    /* Ignore previous call to nfa_regatom() */
 	    post_ptr = post_start + my_post_start;
-	    /* Save pos after the repeated atom and the \{} */
-	    new_regparse = regparse;
+	    /* Save parse state after the repeated atom and the \{} */
+	    save_parse_state(&new_state);
 
 	    quest = (greedy == TRUE? NFA_QUEST : NFA_QUEST_NONGREEDY);
 	    for (i = 0; i < maxval; i++)
 	    {
 		/* Goto beginning of the repeated atom */
-		regparse = old_regparse;
-		curchr = -1;
-		/* Restore count of parenthesis */
-		regnpar = old_regnpar;
+		restore_parse_state(&old_state);
 		old_post_pos = (int)(post_ptr - post_start);
 		if (nfa_regatom() == FAIL)
 		    return FAIL;
 		/* after "minval" times, atoms are optional */
 		if (i + 1 > minval)
-		    EMIT(quest);
+		{
+		    if (maxval == MAX_LIMIT)
+		    {
+			if (greedy)
+			    EMIT(NFA_STAR);
+			else
+			    EMIT(NFA_STAR_NONGREEDY);
+		    }
+		    else
+			EMIT(quest);
+		}
 		if (old_post_pos != my_post_start)
 		    EMIT(NFA_CONCAT);
+		if (i + 1 > minval && maxval == MAX_LIMIT)
+		    break;
 	    }
 
 	    /* Go to just after the repeated atom and the \{} */
-	    regparse = new_regparse;
+	    restore_parse_state(&new_state);
 	    curchr = -1;
 
 	    break;
@@ -1780,13 +1772,15 @@ nfa_set_code(c)
 	case NFA_BOL:		STRCPY(code, "NFA_BOL "); break;
 	case NFA_EOW:		STRCPY(code, "NFA_EOW "); break;
 	case NFA_BOW:		STRCPY(code, "NFA_BOW "); break;
+	case NFA_EOF:		STRCPY(code, "NFA_EOF "); break;
+	case NFA_BOF:		STRCPY(code, "NFA_BOF "); break;
 	case NFA_STAR:		STRCPY(code, "NFA_STAR "); break;
-	case NFA_PLUS:		STRCPY(code, "NFA_PLUS "); break;
+	case NFA_STAR_NONGREEDY: STRCPY(code, "NFA_STAR_NONGREEDY "); break;
+	case NFA_QUEST:		STRCPY(code, "NFA_QUEST"); break;
+	case NFA_QUEST_NONGREEDY: STRCPY(code, "NFA_QUEST_NON_GREEDY"); break;
 	case NFA_NOT:		STRCPY(code, "NFA_NOT "); break;
 	case NFA_SKIP_CHAR:	STRCPY(code, "NFA_SKIP_CHAR"); break;
 	case NFA_OR:		STRCPY(code, "NFA_OR"); break;
-	case NFA_QUEST:		STRCPY(code, "NFA_QUEST"); break;
-	case NFA_QUEST_NONGREEDY: STRCPY(code, "NFA_QUEST_NON_GREEDY"); break;
 	case NFA_END_NEG_RANGE:	STRCPY(code, "NFA_END_NEG_RANGE"); break;
 	case NFA_CLASS_ALNUM:	STRCPY(code, "NFA_CLASS_ALNUM"); break;
 	case NFA_CLASS_ALPHA:	STRCPY(code, "NFA_CLASS_ALPHA"); break;
@@ -2303,7 +2297,7 @@ post2nfa(postfix, end, nfa_calc_size)
 	    break;
 
 	case NFA_STAR:
-	    /* Zero or more */
+	    /* Zero or more, prefer more */
 	    if (nfa_calc_size == TRUE)
 	    {
 		nstate++;
@@ -2315,6 +2309,21 @@ post2nfa(postfix, end, nfa_calc_size)
 		goto theend;
 	    patch(e.out, s);
 	    PUSH(frag(s, list1(&s->out1)));
+	    break;
+
+	case NFA_STAR_NONGREEDY:
+	    /* Zero or more, prefer zero */
+	    if (nfa_calc_size == TRUE)
+	    {
+		nstate++;
+		break;
+	    }
+	    e = POP();
+	    s = new_state(NFA_SPLIT, NULL, e.start);
+	    if (s == NULL)
+		goto theend;
+	    patch(e.out, s);
+	    PUSH(frag(s, list1(&s->out)));
 	    break;
 
 	case NFA_QUEST:
@@ -2343,21 +2352,6 @@ post2nfa(postfix, end, nfa_calc_size)
 	    if (s == NULL)
 		goto theend;
 	    PUSH(frag(s, append(e.out, list1(&s->out))));
-	    break;
-
-	case NFA_PLUS:
-	    /* One or more */
-	    if (nfa_calc_size == TRUE)
-	    {
-		nstate++;
-		break;
-	    }
-	    e = POP();
-	    s = new_state(NFA_SPLIT, e.start, NULL);
-	    if (s == NULL)
-		goto theend;
-	    patch(e.out, s);
-	    PUSH(frag(e.start, list1(&s->out1)));
 	    break;
 
 	case NFA_SKIP_CHAR:
@@ -3332,11 +3326,8 @@ nfa_regmatch(start, submatch, m)
     int		result;
     int		size = 0;
     int		flag = 0;
-    int		old_reglnum = -1;
     int		go_to_nextline = FALSE;
     nfa_thread_T *t;
-    char_u	*old_reginput = NULL;
-    char_u	*old_regline = NULL;
     nfa_list_T	list[3];
     nfa_list_T	*listtbl[2][2];
     nfa_list_T	*ll;
@@ -3560,15 +3551,18 @@ nfa_regmatch(start, submatch, m)
 		break;
 
 	    case NFA_START_INVISIBLE:
-		/* Save global variables, and call nfa_regmatch() to check if
-		 * the current concat matches at this position. The concat
-		 * ends with the node NFA_END_INVISIBLE */
-		old_reginput = reginput;
-		old_regline = regline;
-		old_reglnum = reglnum;
+	      {
+		char_u	*save_reginput = reginput;
+		char_u	*save_regline = regline;
+		int	save_reglnum = reglnum;
+		int	save_nfa_match = nfa_match;
+
+		/* Call nfa_regmatch() to check if the current concat matches
+		 * at this position. The concat ends with the node
+		 * NFA_END_INVISIBLE */
 		if (listids == NULL)
 		{
-		    listids = (int *) lalloc(sizeof(int) * nstate, TRUE);
+		    listids = (int *)lalloc(sizeof(int) * nstate, TRUE);
 		    if (listids == NULL)
 		    {
 			EMSG(_("E878: (NFA) Could not allocate memory for branch traversal!"));
@@ -3588,7 +3582,12 @@ nfa_regmatch(start, submatch, m)
 		result = nfa_regmatch(t->state->out, submatch, m);
 		nfa_set_neg_listids(start);
 		nfa_restore_listids(start, listids);
-		nfa_match = FALSE;
+
+		/* restore position in input text */
+		reginput = save_reginput;
+		regline = save_regline;
+		reglnum = save_reglnum;
+		nfa_match = save_nfa_match;
 
 #ifdef ENABLE_LOG
 		log_fd = fopen(NFA_REGEXP_RUN_LOG, "a");
@@ -3610,10 +3609,6 @@ nfa_regmatch(start, submatch, m)
 		{
 		    int j;
 
-		    /* Restore position in input text */
-		    reginput = old_reginput;
-		    regline = old_regline;
-		    reglnum = old_reglnum;
 		    /* Copy submatch info from the recursive call */
 		    if (REG_MULTI)
 			for (j = 1; j < m->in_use; j++)
@@ -3635,12 +3630,8 @@ nfa_regmatch(start, submatch, m)
 		    addstate_here(thislist, t->state->out1->out, &t->sub,
 								    &listidx);
 		}
-		else
-		{
-		    /* continue with next input char */
-		    reginput = old_reginput;
-		}
 		break;
+	      }
 
 	    case NFA_BOL:
 		if (reginput == regline)
@@ -3707,6 +3698,17 @@ nfa_regmatch(start, submatch, m)
 		    addstate_here(thislist, t->state->out, &t->sub, &listidx);
 		break;
 	    }
+
+	    case NFA_BOF:
+		if (reglnum == 0 && reginput == regline
+					&& (!REG_MULTI || reg_firstlnum == 1))
+		    addstate_here(thislist, t->state->out, &t->sub, &listidx);
+		break;
+
+	    case NFA_EOF:
+		if (reglnum == reg_maxline && curc == NUL)
+		    addstate_here(thislist, t->state->out, &t->sub, &listidx);
+		break;
 
 #ifdef FEAT_MBYTE
 	    case NFA_COMPOSING:
