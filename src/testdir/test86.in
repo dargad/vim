@@ -83,7 +83,7 @@ EOF
 :$put =pyeval('repr(''1'' in d)')
 :$put =pyeval('repr(list(iter(d)))')
 :$put =string(d)
-:$put =pyeval('repr(d.popitem(''0''))')
+:$put =pyeval('repr(d.popitem())')
 :$put =pyeval('repr(d.get(''0''))')
 :$put =pyeval('repr(list(iter(d)))')
 :"
@@ -226,7 +226,7 @@ em('d["a\\0b"]=1')
 em('d[u"a\\0b"]=1')
 
 em('d.pop("abc")')
-em('d.popitem("abc")')
+em('d.popitem()')
 EOF
 :$put =messages
 :unlet messages
@@ -788,6 +788,20 @@ EOF
 :$put =string(pyeval('dl2'))
 :$put =string(pyeval('df(2)'))
 :"
+:" Test chdir
+py << EOF
+import os
+fnamemodify = vim.Function('fnamemodify')
+cb.append(fnamemodify('.', ':p:h:t'))
+cb.append(vim.eval('@%'))
+os.chdir('..')
+cb.append(fnamemodify('.', ':p:h:t'))
+cb.append(vim.eval('@%').replace(os.path.sep, '/'))
+os.chdir('testdir')
+cb.append(fnamemodify('.', ':p:h:t'))
+cb.append(vim.eval('@%'))
+EOF
+:"
 :" Test errors
 :fun F() dict
 :endfun
@@ -853,6 +867,7 @@ def convertfrompyobject_test(expr, recurse=True):
     return subexpr_test(expr, 'ConvertFromPyObject', (
         'None',                 # Not conversible
         '{"": 1}',              # Empty key not allowed
+        '{u"": 1}',             # Same, but with unicode object
         'FailingMapping()',     #
         'FailingMappingKey()',  #
     ))
