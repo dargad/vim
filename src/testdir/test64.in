@@ -458,6 +458,21 @@ y$Gop:"
 :.yank
 Gop:"
 :"
+:" Check matching Visual area
+/^Visual:
+jfxvfx:s/\%Ve/E/g
+jV:s/\%Va/A/g
+jfxfxj:s/\%Vo/O/g
+:/^Visual/+1,/^Visual/+4yank
+Gop:"
+:"
+:" Check matching marks
+/^Marks:
+jfSmsfEme:.-4,.+6s/.\%>'s.*\%<'e../here/
+jfSmsj0fEme:.-4,.+6s/.\%>'s\_.*\%<'e../again/
+:/^Marks:/+1,/^Marks:/+3yank
+Gop:"
+:"
 :" Check patterns matching cursor position.
 :func! Postest()
  new
@@ -519,5 +534,16 @@ asdfasd<yy
 xxxstart2
 asdfasd<yy
 xxstart3
+
+Visual:
+thexe the thexethe
+andaxand andaxand
+oooxofor foroxooo
+oooxofor foroxooo
+
+Marks:
+asdfSasdfsadfEasdf
+asdfSas
+dfsadfEasdf
 
 Results of test64:
