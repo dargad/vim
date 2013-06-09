@@ -3495,7 +3495,7 @@ syntax_clear(block)
     block->b_syn_sync_maxlines = 0;
     block->b_syn_sync_linebreaks = 0;
 
-    vim_free(block->b_syn_linecont_prog);
+    vim_regfree(block->b_syn_linecont_prog);
     block->b_syn_linecont_prog = NULL;
     vim_free(block->b_syn_linecont_pat);
     block->b_syn_linecont_pat = NULL;
@@ -3544,7 +3544,7 @@ syntax_sync_clear()
     curwin->w_s->b_syn_sync_maxlines = 0;
     curwin->w_s->b_syn_sync_linebreaks = 0;
 
-    vim_free(curwin->w_s->b_syn_linecont_prog);
+    vim_regfree(curwin->w_s->b_syn_linecont_prog);
     curwin->w_s->b_syn_linecont_prog = NULL;
     vim_free(curwin->w_s->b_syn_linecont_pat);
     curwin->w_s->b_syn_linecont_pat = NULL;
@@ -3583,7 +3583,7 @@ syn_clear_pattern(block, i)
     int		i;
 {
     vim_free(SYN_ITEMS(block)[i].sp_pattern);
-    vim_free(SYN_ITEMS(block)[i].sp_prog);
+    vim_regfree(SYN_ITEMS(block)[i].sp_prog);
     /* Only free sp_cont_list and sp_next_list of first start pattern */
     if (i == 0 || SYN_ITEMS(block)[i - 1].sp_type != SPTYPE_START)
     {
@@ -4991,7 +4991,7 @@ syn_cmd_match(eap, syncing)
     /*
      * Something failed, free the allocated memory.
      */
-    vim_free(item.sp_prog);
+    vim_regfree(item.sp_prog);
     vim_free(item.sp_pattern);
     vim_free(syn_opt_arg.cont_list);
     vim_free(syn_opt_arg.cont_in_list);
@@ -5248,7 +5248,7 @@ syn_cmd_region(eap, syncing)
 	{
 	    if (!success)
 	    {
-		vim_free(ppp->pp_synp->sp_prog);
+		vim_regfree(ppp->pp_synp->sp_prog);
 		vim_free(ppp->pp_synp->sp_pattern);
 	    }
 	    vim_free(ppp->pp_synp);
@@ -6022,7 +6022,7 @@ get_id_list(arg, keylen, list)
 			    id = -1;	    /* remember that we found one */
 			}
 		    }
-		    vim_free(regmatch.regprog);
+		    vim_regfree(regmatch.regprog);
 		}
 	    }
 	    vim_free(name);
@@ -6295,7 +6295,7 @@ ex_ownsyntax(eap)
 	curwin->w_p_spell = FALSE;	/* No spell checking */
 	clear_string_option(&curwin->w_s->b_p_spc);
 	clear_string_option(&curwin->w_s->b_p_spf);
-	vim_free(curwin->w_s->b_cap_prog);
+	vim_regfree(curwin->w_s->b_cap_prog);
 	curwin->w_s->b_cap_prog = NULL;
 	clear_string_option(&curwin->w_s->b_p_spl);
 #endif
@@ -6577,6 +6577,27 @@ syntime_clear()
     }
 }
 
+#if defined(FEAT_CMDL_COMPL) || defined(PROTO)
+/*
+ * Function given to ExpandGeneric() to obtain the possible arguments of the
+ * ":syntime {on,off,clear,report}" command.
+ */
+    char_u *
+get_syntime_arg(xp, idx)
+    expand_T	*xp UNUSED;
+    int		idx;
+{
+    switch (idx)
+    {
+	case 0: return (char_u *)"on";
+	case 1: return (char_u *)"off";
+	case 2: return (char_u *)"clear";
+	case 3: return (char_u *)"report";
+    }
+    return NULL;
+}
+#endif
+
 typedef struct
 {
     proftime_T	total;
@@ -6610,7 +6631,9 @@ syntime_report()
 {
     int		idx;
     synpat_T	*spp;
+# ifdef FEAT_FLOAT
     proftime_T	tm;
+# endif
     int		len;
     proftime_T	total_total;
     int		total_count = 0;
