@@ -3936,9 +3936,10 @@ addstate(l, state, subs, pim, off)
 	case NFA_BOL:
 	case NFA_BOF:
 	    /* "^" won't match past end-of-line, don't bother trying.
-	     * Except when we are going to the next line for a look-behind
-	     * match. */
+	     * Except when at the end of the line, or when we are going to the
+	     * next line for a look-behind match. */
 	    if (reginput > regline
+		    && *reginput != NUL
 		    && (nfa_endp == NULL
 			|| !REG_MULTI
 			|| reglnum == nfa_endp->se_u.pos.lnum))
@@ -4494,8 +4495,7 @@ recursive_regmatch(state, pim, prog, submatch, m, listids)
     regsubs_T	    *m;
     int		    **listids;
 {
-    char_u	*save_reginput = reginput;
-    char_u	*save_regline = regline;
+    int		save_reginput_col = (int)(reginput - regline);
     int		save_reglnum = reglnum;
     int		save_nfa_match = nfa_match;
     int		save_nfa_listid = nfa_listid;
@@ -4632,9 +4632,10 @@ recursive_regmatch(state, pim, prog, submatch, m, listids)
     }
 
     /* restore position in input text */
-    reginput = save_reginput;
-    regline = save_regline;
     reglnum = save_reglnum;
+    if (REG_MULTI)
+	regline = reg_getline(reglnum);
+    reginput = regline + save_reginput_col;
     nfa_match = save_nfa_match;
     nfa_endp = save_nfa_endp;
     nfa_listid = save_nfa_listid;
