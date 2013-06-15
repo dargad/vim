@@ -3612,7 +3612,7 @@ copy_sub_off(to, from)
 }
 
 /*
- * Return TRUE if "sub1" and "sub2" have the same positions.
+ * Return TRUE if "sub1" and "sub2" have the same start positions.
  */
     static int
 sub_equal(sub1, sub2)
@@ -3621,10 +3621,10 @@ sub_equal(sub1, sub2)
 {
     int		i;
     int		todo;
-    linenr_T	s1, e1;
-    linenr_T	s2, e2;
-    char_u	*sp1, *ep1;
-    char_u	*sp2, *ep2;
+    linenr_T	s1;
+    linenr_T	s2;
+    char_u	*sp1;
+    char_u	*sp2;
 
     todo = sub1->in_use > sub2->in_use ? sub1->in_use : sub2->in_use;
     if (REG_MULTI)
@@ -3632,32 +3632,17 @@ sub_equal(sub1, sub2)
 	for (i = 0; i < todo; ++i)
 	{
 	    if (i < sub1->in_use)
-	    {
 		s1 = sub1->list.multi[i].start.lnum;
-		e1 = sub1->list.multi[i].end.lnum;
-	    }
 	    else
-	    {
 		s1 = 0;
-		e1 = 0;
-	    }
 	    if (i < sub2->in_use)
-	    {
 		s2 = sub2->list.multi[i].start.lnum;
-		e2 = sub2->list.multi[i].end.lnum;
-	    }
 	    else
-	    {
 		s2 = 0;
-		e2 = 0;
-	    }
-	    if (s1 != s2 || e1 != e2)
+	    if (s1 != s2)
 		return FALSE;
 	    if (s1 != 0 && sub1->list.multi[i].start.col
 					     != sub2->list.multi[i].start.col)
-		return FALSE;
-	    if (e1 != 0 && sub1->list.multi[i].end.col
-					     != sub2->list.multi[i].end.col)
 		return FALSE;
 	}
     }
@@ -3666,26 +3651,14 @@ sub_equal(sub1, sub2)
 	for (i = 0; i < todo; ++i)
 	{
 	    if (i < sub1->in_use)
-	    {
 		sp1 = sub1->list.line[i].start;
-		ep1 = sub1->list.line[i].end;
-	    }
 	    else
-	    {
 		sp1 = NULL;
-		ep1 = NULL;
-	    }
 	    if (i < sub2->in_use)
-	    {
 		sp2 = sub2->list.line[i].start;
-		ep2 = sub2->list.line[i].end;
-	    }
 	    else
-	    {
 		sp2 = NULL;
-		ep2 = NULL;
-	    }
-	    if (sp1 != sp2 || ep1 != ep2)
+	    if (sp1 != sp2)
 		return FALSE;
 	}
     }
@@ -3735,8 +3708,8 @@ has_state_with_pos(l, state, subs)
 	if (thread->state->id == state->id
 		&& sub_equal(&thread->subs.norm, &subs->norm)
 #ifdef FEAT_SYN_HL
-		&& (!nfa_has_zsubexpr ||
-		       sub_equal(&thread->subs.synt, &subs->synt))
+		&& (!nfa_has_zsubexpr
+				|| sub_equal(&thread->subs.synt, &subs->synt))
 #endif
 			      )
 	    return TRUE;
@@ -4367,14 +4340,27 @@ retempty:
 	if (sub->list.multi[subidx].start.lnum < 0
 				       || sub->list.multi[subidx].end.lnum < 0)
 	    goto retempty;
-	/* TODO: line breaks */
-	len = sub->list.multi[subidx].end.col
-					 - sub->list.multi[subidx].start.col;
-	if (cstrncmp(regline + sub->list.multi[subidx].start.col,
-							reginput, &len) == 0)
+	if (sub->list.multi[subidx].start.lnum == reglnum
+			       && sub->list.multi[subidx].end.lnum == reglnum)
 	{
-	    *bytelen = len;
-	    return TRUE;
+	    len = sub->list.multi[subidx].end.col
+					  - sub->list.multi[subidx].start.col;
+	    if (cstrncmp(regline + sub->list.multi[subidx].start.col,
+							 reginput, &len) == 0)
+	    {
+		*bytelen = len;
+		return TRUE;
+	    }
+	}
+	else
+	{
+	    if (match_with_backref(
+			sub->list.multi[subidx].start.lnum,
+			sub->list.multi[subidx].start.col,
+			sub->list.multi[subidx].end.lnum,
+			sub->list.multi[subidx].end.col,
+			bytelen) == RA_MATCH)
+		return TRUE;
 	}
     }
     else
@@ -4699,6 +4685,18 @@ failure_chance(state, depth)
 	case NFA_MCLOSE:
 	    /* empty match works always */
 	    return 0;
+
+	case NFA_START_INVISIBLE:
+	case NFA_START_INVISIBLE_FIRST:
+	case NFA_START_INVISIBLE_NEG:
+	case NFA_START_INVISIBLE_NEG_FIRST:
+	case NFA_START_INVISIBLE_BEFORE:
+	case NFA_START_INVISIBLE_BEFORE_FIRST:
+	case NFA_START_INVISIBLE_BEFORE_NEG:
+	case NFA_START_INVISIBLE_BEFORE_NEG_FIRST:
+	case NFA_START_PATTERN:
+	    /* recursive regmatch is expensive, use low failure chance */
+	    return 5;
 
 	case NFA_BOL:
 	case NFA_EOL:
@@ -5278,7 +5276,7 @@ nfa_regmatch(prog, start, submatch, m)
 		    skip_lid = nextlist->id;
 #endif
 		}
-		else if(state_in_list(thislist,
+		else if (state_in_list(thislist,
 					  t->state->out1->out->out, &t->subs))
 		{
 		    skip = t->state->out1->out->out;
