@@ -4379,11 +4379,6 @@ set_cmd_context(xp, str, len, col)
     int		old_char = NUL;
     char_u	*nextcomm;
 
-    /* Store the string here so that call_user_expand_func() can get to them
-     * easily. */
-    xp->xp_line = str;
-    xp->xp_col = col;
-
     /*
      * Avoid a UMR warning from Purify, only save the character if it has been
      * written before.
@@ -4413,6 +4408,11 @@ set_cmd_context(xp, str, len, col)
 #endif
 	while (nextcomm != NULL)
 	    nextcomm = set_one_cmd_context(xp, nextcomm);
+
+    /* Store the string here so that call_user_expand_func() can get to them
+     * easily. */
+    xp->xp_line = str;
+    xp->xp_col = col;
 
     str[col] = old_char;
 }
@@ -4951,7 +4951,7 @@ call_user_expand_func(user_expand_func, xp, num_file, file)
     int		*num_file;
     char_u	***file;
 {
-    char_u	keep;
+    int		keep = 0;
     char_u	num[50];
     char_u	*args[3];
     int		save_current_SID = current_SID;
