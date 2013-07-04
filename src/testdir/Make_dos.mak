@@ -11,7 +11,7 @@ VIMPROG = ..\\vim
 # test12	can't unlink a swap file
 # test25	uses symbolic link
 # test27	can't edit file with "*" in file name
-# test31	16 bit version runs out of memory...
+# test97	\{ and \$ are not escaped characters.
 
 SCRIPTS16 =	test1.out test19.out test20.out test22.out \
 		test23.out test24.out test28.out test29.out \

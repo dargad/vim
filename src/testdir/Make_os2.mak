@@ -15,6 +15,7 @@ VIMPROG = ../vim.exe
 # test52	only for Win32
 # test85	no Lua interface
 # test86, 87	no Python interface
+# test97	\{ and \$ are not escaped characters.
 
 SCRIPTS = test1.out test3.out test4.out test5.out test6.out \
 		test7.out test8.out test9.out \
