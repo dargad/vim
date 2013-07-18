@@ -150,7 +150,7 @@ VIMCUR:=$(NAME)$(subst .,,$(VERSION))$(SNAPSHOT)
 EXPORT_DIR ?= ..
 ORIG_SOURCE := $(EXPORT_DIR)/$(NAME)_$(DEB_VERSION_UPSTREAM).orig.tar.gz
 PER_VARIANT_FILES := install postinst prerm links
-LANGS := fr it pl ru
+LANGS := fr it pl ru ja.UTF-8
 
 DOT_IN_DEPS := debian/vim-common.install
 DOT_IN_DEPS += debian/vim-common.links

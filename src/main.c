@@ -2408,7 +2408,7 @@ scripterror:
 	     * Look for evidence of non-Cygwin paths before we bother.
 	     * This is only for when using the Unix files.
 	     */
-	    if (vim_strpbrk(p, "\\:") != NULL && !path_with_url(p))
+	    if (strpbrk(p, "\\:") != NULL && !path_with_url(p))
 	    {
 		char posix_path[PATH_MAX];
 
@@ -2418,7 +2418,7 @@ scripterror:
 		cygwin_conv_to_posix_path(p, posix_path);
 # endif
 		vim_free(p);
-		p = vim_strsave((char_u *)posix_path);
+		p = vim_strsave(posix_path);
 		if (p == NULL)
 		    mch_exit(2);
 	    }
@@ -2816,25 +2816,7 @@ edit_buffers(parmp)
 # ifdef FEAT_AUTOCMD
     --autocmd_no_enter;
 # endif
-#if defined(FEAT_WINDOWS) && defined(FEAT_QUICKFIX)
-    /*
-     * Avoid making a preview window the current window.
-     */
-    if (firstwin->w_p_pvw)
-    {
-       win_T   *win;
-
-       for (win = firstwin; win != NULL; win = win->w_next)
-           if (!win->w_p_pvw)
-           {
-               firstwin = win;
-               break;
-           }
-    }
-#endif
-    /* make the first window the current window */
-    win_enter(firstwin, FALSE);
-
+    win_enter(firstwin, FALSE);		/* back to first window */
 # ifdef FEAT_AUTOCMD
     --autocmd_no_leave;
 # endif
@@ -2997,10 +2979,6 @@ source_startup_scripts(parmp)
 #endif
 #ifdef USR_VIMRC_FILE3
 		&& do_source((char_u *)USR_VIMRC_FILE3, TRUE,
-							   DOSO_VIMRC) == FAIL
-#endif
-#ifdef USR_VIMRC_FILE4
-		&& do_source((char_u *)USR_VIMRC_FILE4, TRUE,
 							   DOSO_VIMRC) == FAIL
 #endif
 		&& process_env((char_u *)"EXINIT", FALSE) == FAIL
