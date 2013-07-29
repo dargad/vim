@@ -1,7 +1,11 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
+<<<<<<< HEAD
 " Last Change:	2013 Jun 01
+=======
+" Last Change:	2013 Jul 21
+>>>>>>> master
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -1386,6 +1390,9 @@ au BufNewFile,BufRead *.rcp			setf pilrc
 
 " Pine config
 au BufNewFile,BufRead .pinerc,pinerc,.pinercex,pinercex		setf pine
+
+" PL/1, PL/I
+au BufNewFile,BufRead *.pli,*.pl1		setf pli
 
 " PL/M (also: *.inp)
 au BufNewFile,BufRead *.plm,*.p36,*.pac		setf plm

@@ -1,4 +1,4 @@
-*todo.txt*      For Vim version 7.4a.  Last change: 2013 Jul 17
+*todo.txt*      For Vim version 7.4b.  Last change: 2013 Jul 28
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -34,17 +34,7 @@ not be repeated below, unless there is extra information.
 							*known-bugs*
 -------------------- Known bugs and current work -----------------------
 
-Edit changed-7.4 text.
-
-Patch for this bug: (Ken Takata, 2013 Jul 17)
-8   Win32: When mouse is hidden and in the toolbar, moving it won't make it
-    appear. (Sami Salonen)
-
-This results in 'fileformat' set to "dos" instead of "unix". (Ingo Karkat,
-2013 Jul 16)
-    :set fileformats=dos,unix
-    :new ++ff=unix
-Also for ++bin and ++enc.
+Syntax file updates. (Doug Kearns, Jul 28)
 
 Python: ":py raw_input('prompt')" doesn't work. (Manu Hack)
 
@@ -58,6 +48,12 @@ highlight group.  Add a "\zs" after it?
 
 Go through more coverity reports.
 
+Bug: ":he \^x" gives strange E63 error when 'regexpengine' is set to 1.
+With 'regexpengine' set to 0 results in an INTERNAL errror.
+(glts, 2013 Jul 28)
+
+/[b-a] gives error E16, should probably be E769.
+
 Discussion about canonicalization of Hebrew. (Ron Aaron, 2011 April 10)
 
 Checking runtime scripts: Thilo Six, 2012 Jun 6.
@@ -69,6 +65,10 @@ GTK: problem with 'L' in 'guioptions' changing the window width.
 (Aaron Cornelius, 2012 Feb 6)
 
 Javascript file where indent gets stuck on: GalaxyMaster, 2012 May 3.
+
+The BufUnload event is triggered when re-using the empty buffer.
+(Pokey Rule, 2013 Jul 22)
+Patch by Marcin Szamotulski, 2013 Jul 22.
 
 The CompleteDone autocommand needs some info passed to it:
 - The word that was selected (empty if abandoned complete)
@@ -105,6 +105,9 @@ carried over when using :global. (Christian Brabandt, 2013 Jun 19)
 
 Bug with 'cursorline' in diff mode.  Line being scrolled into view gets
 highlighted as the cursor line.  (Alessandro Ivaldi, 2013 Jun 4)
+
+Bug when setting Visual area manually and 'selection' is exclusive, includes
+one character too much. (Ingo Karkat, 2013 Jul 26)
 
 Patch to add the bufferlist() function. (Yegappan Lakshmanan, 2013 May 5)
 May 17: with winlist() and tabpagelist().
@@ -186,7 +189,6 @@ names. (ZyX, 2013 Jul 15 and later)
 Python: Be able to define a Python function that can be called directly from
 Vim script.  Requires converting the arguments and return value, like with
 vim.bindeval().
-
 
 Patch for :tabcloseleft, after closing a tab go to left tab. (William Bowers,
 2012 Aug 4)
@@ -451,7 +453,7 @@ May 24)  Update May 26.
 
 Patch for :tabrecently. (Hirokazu Yoshida, 2012 Jan 30)
 
-Problem with "syn sync gouphere". (Gustavo Niemeyer, 2011 Jan 27)
+Problem with "syn sync grouphere". (Gustavo Niemeyer, 2011 Jan 27)
 
 Loading autoload script even when usage is inside "if 0". (Christian Brabandt,
 2010 Dec 18)
