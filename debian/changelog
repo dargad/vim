@@ -1,3 +1,9 @@
+vim (2:7.4b.004) raring; urgency=low
+
+  * Auto version upgrade (7.4b.004)
+
+ -- Dariusz Gadomski <dgadomski@gmail.com>  Fri, 02 Aug 2013 03:08:37 +0200
+
 vim (2:7.4b.000) raring; urgency=low
 
   * Auto version upgrade (7.4b.000)
