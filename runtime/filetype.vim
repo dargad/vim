@@ -870,6 +870,9 @@ au BufNewFile,BufRead */etc/hosts.allow,*/etc/hosts.deny  setf hostsaccess
 " Hyper Builder
 au BufNewFile,BufRead *.hb			setf hb
 
+" Httest
+au BufNewFile,BufRead *.htt,*.htb		setf httest
+
 " Icon
 au BufNewFile,BufRead *.icn			setf icon
 
@@ -927,8 +930,6 @@ au BufNewFile,BufRead *.inf,*.INF		setf inform
 " Initng
 au BufNewFile,BufRead */etc/initng/*/*.i,*.ii	setf initng
 
-<<<<<<< HEAD
-=======
 " Innovation Data Processing
 au BufRead,BufNewFile upstream.dat\c,upstream.*.dat\c,*.upstream.dat\c 	setf upstreamdat
 au BufRead,BufNewFile upstream.log\c,upstream.*.log\c,*.upstream.log\c 	setf upstreamlog
@@ -936,7 +937,6 @@ au BufRead,BufNewFile upstreaminstall.log\c,upstreaminstall.*.log\c,*.upstreamin
 au BufRead,BufNewFile usserver.log\c,usserver.*.log\c,*.usserver.log\c 	setf usserverlog
 au BufRead,BufNewFile usw2kagt.log\c,usw2kagt.*.log\c,*.usw2kagt.log\c 	setf usw2kagtlog
 
->>>>>>> master
 " Ipfilter
 au BufNewFile,BufRead ipf.conf,ipf6.conf,ipf.rules	setf ipfilter
 
@@ -1560,6 +1560,9 @@ au BufNewFile,BufRead *.pdb			setf prolog
 
 " Promela
 au BufNewFile,BufRead *.pml			setf promela
+
+" Google protocol buffers
+au BufNewFile,BufRead *.proto			setf proto
 
 " Protocols
 au BufNewFile,BufRead */etc/protocols		setf protocols
