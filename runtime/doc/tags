@@ -341,9 +341,7 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 'iconstring'	options.txt	/*'iconstring'*
 'ignorecase'	options.txt	/*'ignorecase'*
 'im'	options.txt	/*'im'*
-'imactivatefunc'	options.txt	/*'imactivatefunc'*
 'imactivatekey'	options.txt	/*'imactivatekey'*
-'imaf'	options.txt	/*'imaf'*
 'imak'	options.txt	/*'imak'*
 'imc'	options.txt	/*'imc'*
 'imcmdline'	options.txt	/*'imcmdline'*
@@ -353,8 +351,6 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 'iminsert'	options.txt	/*'iminsert'*
 'ims'	options.txt	/*'ims'*
 'imsearch'	options.txt	/*'imsearch'*
-'imsf'	options.txt	/*'imsf'*
-'imstatusfunc'	options.txt	/*'imstatusfunc'*
 'inc'	options.txt	/*'inc'*
 'include'	options.txt	/*'include'*
 'includeexpr'	options.txt	/*'includeexpr'*
@@ -500,10 +496,8 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 'nocopyindent'	options.txt	/*'nocopyindent'*
 'nocp'	options.txt	/*'nocp'*
 'nocrb'	options.txt	/*'nocrb'*
-'nocscoperelative'	options.txt	/*'nocscoperelative'*
 'nocscopetag'	options.txt	/*'nocscopetag'*
 'nocscopeverbose'	options.txt	/*'nocscopeverbose'*
-'nocsre'	options.txt	/*'nocsre'*
 'nocst'	options.txt	/*'nocst'*
 'nocsverb'	options.txt	/*'nocsverb'*
 'nocuc'	options.txt	/*'nocuc'*
@@ -7197,7 +7191,6 @@ notation	intro.txt	/*notation*
 notepad	gui_w32.txt	/*notepad*
 nr2char()	eval.txt	/*nr2char()*
 nroff.vim	syntax.txt	/*nroff.vim*
-number_relativenumber	options.txt	/*number_relativenumber*
 numbered-function	eval.txt	/*numbered-function*
 o	insert.txt	/*o*
 o_CTRL-V	motion.txt	/*o_CTRL-V*
@@ -7233,6 +7226,8 @@ option-summary	options.txt	/*option-summary*
 option-window	options.txt	/*option-window*
 options	options.txt	/*options*
 options-changed	version5.txt	/*options-changed*
+options.txt	options.txt	/*options.txt*
+options.txt	options.txt	/*options.txt*
 options.txt	options.txt	/*options.txt*
 optwin	options.txt	/*optwin*
 or()	eval.txt	/*or()*

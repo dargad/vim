@@ -103,7 +103,7 @@ ALLINTERPFLAGS:=--enable-luainterp
 ALLINTERPFLAGS+=--disable-mzschemeinterp
 ALLINTERPFLAGS+=--enable-perlinterp
 ALLINTERPFLAGS+=--enable-pythoninterp --with-python-config-dir=$(shell python-config --configdir)
-ALLINTERPFLAGS+=--disable-python3interp
+ALLINTERPFLAGS+=--enable-python3interp --with-python3-config-dir=$(shell python3-config --configdir)
 ALLINTERPFLAGS+=--enable-rubyinterp
 ALLINTERPFLAGS+=--enable-tclinterp
 
