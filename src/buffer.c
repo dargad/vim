@@ -211,7 +211,12 @@ open_buffer(read_stdin, eap, flags)
 
     /* if first time loading this buffer, init b_chartab[] */
     if (curbuf->b_flags & BF_NEVERLOADED)
+    {
 	(void)buf_init_chartab(curbuf, FALSE);
+#ifdef FEAT_CINDENT
+	parse_cino(curbuf);
+#endif
+    }
 
     /*
      * Set/reset the Changed flag first, autocmds may change the buffer.
