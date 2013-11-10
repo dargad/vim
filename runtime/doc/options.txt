@@ -2,6 +2,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 *options.txt*	For Vim version 7.3.  Last change: 2013 May 23
 =======
 *options.txt*	For Vim version 7.4a.  Last change: 2013 Jul 09
@@ -14,6 +15,9 @@
 >>>>>>> master
 =======
 *options.txt*	For Vim version 7.4.  Last change: 2013 Aug 22
+>>>>>>> master
+=======
+*options.txt*	For Vim version 7.4.  Last change: 2013 Nov 06
 >>>>>>> master
 
 
